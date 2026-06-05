@@ -65,16 +65,29 @@ jobs:
         sed -i 's/\xEF\xBB\xBF//' app/build.gradle
         sed -i '1s/^[ \t]*//' app/build.gradle
     
-    - name: Install Gradle
+    # 升级 Gradle 到 7.6
+    - name: Upgrade Gradle wrapper
       run: |
-        sudo apt-get update
-        sudo apt-get install -y gradle
+        mkdir -p gradle/wrapper
+        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-all.zip
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
+        
+        # 下载正确的 wrapper jar
+        curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v7.6.0/gradle/wrapper/gradle-wrapper.jar
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
     
     - name: Build APK
-      run: gradle assembleDebug
+      run: ./gradlew assembleDebug --stacktrace
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug.apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: app/build/outputs/apk/debug/*.apk
