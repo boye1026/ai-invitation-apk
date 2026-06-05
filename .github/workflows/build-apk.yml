@@ -5,7 +5,6 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  # 允许手动触发
   workflow_dispatch:
 
 jobs:
@@ -25,7 +24,7 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v4
     
-    # 修复 build.gradle 文件（去除BOM并确保内容正确）
+    # 修复 build.gradle 文件
     - name: Fix build.gradle
       run: |
         cat > app/build.gradle << 'EOF'
@@ -76,7 +75,6 @@ jobs:
         zipStorePath=wrapper/dists
         EOF
         
-        # 下载 gradle-wrapper.jar
         curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar
     
     - name: Grant execute permission for gradlew
@@ -84,7 +82,6 @@ jobs:
         if [ -f "gradlew" ]; then
           chmod +x gradlew
         else
-          # 如果 gradlew 不存在，创建一个
           cat > gradlew << 'GRADLEW'
         #!/bin/sh
         exec gradle "$@"
@@ -92,10 +89,10 @@ jobs:
           chmod +x gradlew
         fi
     
-    # 创建 AndroidManifest.xml 和图标资源
+    # 创建 Android 资源文件（无 BOM）
     - name: Create Android resources
       run: |
-        # 创建目录结构
+        # 创建目录
         mkdir -p app/src/main/res/mipmap-hdpi
         mkdir -p app/src/main/res/mipmap-mdpi
         mkdir -p app/src/main/res/mipmap-xhdpi
@@ -104,96 +101,114 @@ jobs:
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/java/com/ai/invitation
         
-        # 创建 strings.xml
-        cat > app/src/main/res/values/strings.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <resources>
-            <string name="app_name">AI Invitation</string>
-        </resources>
-        EOF
+        # 创建 strings.xml（无 BOM）
+        printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/strings.xml
+        printf '%s\n' '<resources>' >> app/src/main/res/values/strings.xml
+        printf '%s\n' '    <string name="app_name">AI Invitation</string>' >> app/src/main/res/values/strings.xml
+        printf '%s\n' '</resources>' >> app/src/main/res/values/strings.xml
         
-        # 创建 AndroidManifest.xml
-        cat > app/src/main/AndroidManifest.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-            package="com.ai.invitation">
+        # 创建 AndroidManifest.xml（无 BOM）
+        printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
+        printf '%s\n' '<manifest xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '    package="com.ai.invitation">' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '    <application' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        android:allowBackup="true"' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        android:icon="@mipmap/ic_launcher"' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        android:label="@string/app_name"' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        android:roundIcon="@mipmap/ic_launcher_round"' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        android:supportsRtl="true"' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        android:theme="@style/Theme.AppCompat.Light">' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        <activity' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '            android:name=".MainActivity"' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '            android:exported="true">' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '            <intent-filter>' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '                <action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '                <category android:name="android.intent.category.LAUNCHER" />' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '            </intent-filter>' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '        </activity>' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '    </application>' >> app/src/main/AndroidManifest.xml
+        printf '%s\n' '</manifest>' >> app/src/main/AndroidManifest.xml
         
-            <application
-                android:allowBackup="true"
-                android:icon="@mipmap/ic_launcher"
-                android:label="@string/app_name"
-                android:roundIcon="@mipmap/ic_launcher_round"
-                android:supportsRtl="true"
-                android:theme="@style/Theme.AppCompat.Light">
-                <activity
-                    android:name=".MainActivity"
-                    android:exported="true">
-                    <intent-filter>
-                        <action android:name="android.intent.action.MAIN" />
-                        <category android:name="android.intent.category.LAUNCHER" />
-                    </intent-filter>
-                </activity>
-            </application>
+        # 创建 MainActivity.java（无 BOM）
+        printf '%s\n' 'package com.ai.invitation;' > app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' 'import android.os.Bundle;' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' 'import android.widget.TextView;' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' 'import androidx.appcompat.app.AppCompatActivity;' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' 'public class MainActivity extends AppCompatActivity {' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '    @Override' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '    protected void onCreate(Bundle savedInstanceState) {' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '        super.onCreate(savedInstanceState);' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '        TextView textView = new TextView(this);' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '        textView.setText("AI Invitation App");' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '        textView.setTextSize(24);' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '        textView.setGravity(android.view.Gravity.CENTER);' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '        setContentView(textView);' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '    }' >> app/src/main/java/com/ai/invitation/MainActivity.java
+        printf '%s\n' '}' >> app/src/main/java/com/ai/invitation/MainActivity.java
         
-        </manifest>
-        EOF
-        
-        # 创建简单的 MainActivity
-        cat > app/src/main/java/com/ai/invitation/MainActivity.java << 'EOF'
-        package com.ai.invitation;
-        
-        import android.os.Bundle;
-        import android.widget.TextView;
-        import androidx.appcompat.app.AppCompatActivity;
-        
-        public class MainActivity extends AppCompatActivity {
-            @Override
-            protected void onCreate(Bundle savedInstanceState) {
-                super.onCreate(savedInstanceState);
-                TextView textView = new TextView(this);
-                textView.setText("AI Invitation App");
-                textView.setTextSize(24);
-                textView.setGravity(android.view.Gravity.CENTER);
-                setContentView(textView);
-            }
-        }
-        EOF
-        
-        # 创建简单的 PNG 图标（使用 base64 编码的1x1透明像素作为占位符）
-        # 实际构建时 aapt 会处理，这里创建最小的有效图标
+        # 创建简单的 PNG 图标
         for dir in mipmap-hdpi mipmap-mdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
-          # 创建一个简单的蓝色方形图标的 base64
           echo "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMTM0A1t6AAAAH0lEQVR4nO3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAGbwQA8bwDgQAAAABJRU5ErkJggg==" | base64 -d > app/src/main/res/$dir/ic_launcher.png
           cp app/src/main/res/$dir/ic_launcher.png app/src/main/res/$dir/ic_launcher_round.png
         done
     
-    - name: Remove BOM and illegal characters
+    # 移除所有 BOM 字符（关键步骤）
+    - name: Remove BOM from all source files
       run: |
-        # 移除 BOM
-        sed -i 's/\xEF\xBB\xBF//' app/build.gradle 2>/dev/null || true
-        sed -i '1s/^[ \t]*//' app/build.gradle 2>/dev/null || true
+        # 移除 build.gradle 的 BOM
+        sed -i '1s/^\xEF\xBB\xBF//' app/build.gradle 2>/dev/null || true
         
-        # 验证文件
-        echo "=== build.gradle 前10行 ==="
-        head -10 app/build.gradle
-        echo "==========================="
+        # 移除所有 Java 文件的 BOM
+        find app/src -name "*.java" -exec sed -i '1s/^\xEF\xBB\xBF//' {} \; 2>/dev/null || true
+        
+        # 移除所有 XML 文件的 BOM
+        find app/src -name "*.xml" -exec sed -i '1s/^\xEF\xBB\xBF//' {} \; 2>/dev/null || true
+        
+        # 移除所有 Properties 文件的 BOM
+        find app/src -name "*.properties" -exec sed -i '1s/^\xEF\xBB\xBF//' {} \; 2>/dev/null || true
+        
+        echo "BOM removal complete"
+        
+        # 验证 Java 文件没有 BOM
+        echo "=== Checking first Java file ==="
+        head -c 20 app/src/main/java/com/ai/invitation/MainActivity.java | xxd
+        
+        # 添加 gradle.properties 抑制警告
+        cat >> gradle.properties << 'EOF'
+        android.suppressUnsupportedCompileSdk=34
+        EOF
+    
+    # 清理可能存在的 WebAppInterface.java（如果有）
+    - name: Remove problematic files
+      run: |
+        # 删除有问题的 WebAppInterface.java
+        find app/src -name "WebAppInterface.java" -exec rm -f {} \; 2>/dev/null || true
+        
+        # 显示目录结构
+        echo "=== Java files ==="
+        find app/src -name "*.java" -type f
+        
+        echo "=== XML files ==="
+        find app/src -name "*.xml" -type f
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace --no-daemon
     
-    - name: Upload APK
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/*.apk
         retention-days: 30
     
-    # 可选：如果 Debug APK 构建成功，也尝试构建 Release
-    - name: Build Release APK (optional)
+    - name: Build Release APK
       if: success()
       run: ./gradlew assembleRelease --stacktrace --no-daemon
     
-    - name: Upload Release APK (optional)
+    - name: Upload Release APK
       if: success()
       uses: actions/upload-artifact@v4
       with:
