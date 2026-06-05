@@ -37,3 +37,9 @@ jobs:
           name: app-debug.apk
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+- name: Clean invalid BOM & blank
+  run: |
+    sed -i '1s/^\xEF\xBB\xBF//' app/build.gradle
+    sed -i '1s/^[[:space:]]*//' app/build.gradle
+- name: Build APK
+  run: gradle assembleDebug
