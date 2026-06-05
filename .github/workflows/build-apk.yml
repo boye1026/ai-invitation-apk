@@ -1,5 +1,4 @@
 name: Build Android APK
-
 on:
   push:
     branches: [ main ]
@@ -7,36 +6,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set JDK17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '8.7' # 使用指定版本的Gradle
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      # 关键：删除文件头部BOM隐形字符、全角空格
+      - name: Remove BOM & illegal char
+        run: |
+          sed -i 's/\xEF\xBB\xBF//' app/build.gradle
+          sed -i '1s/^[ \t]*//' app/build.gradle
 
       - name: Build Debug APK
-        run: gradle assembleDebug # 注意这里没有./，直接用gradle命令
+        run: gradle assembleDebug
 
-      - name: Upload Debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug.apk
           path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
       - name: Clean invalid BOM & blank
         run: |
           sed -i '1s/^\xEF\xBB\xBF//' app/build.gradle
