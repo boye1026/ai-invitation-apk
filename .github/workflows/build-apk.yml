@@ -89,9 +89,12 @@ jobs:
           chmod +x gradlew
         fi
     
-    # 创建最小化资源（无图标）
-    - name: Create minimal Android resources
+    # 删除有问题的 Java 文件并创建干净的代码
+    - name: Clean and create source files
       run: |
+        # 删除所有现有的 Java 文件
+        rm -rf app/src/main/java/com/ai/invitation/*.java 2>/dev/null || true
+        
         # 创建目录
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/java/com/ai/invitation
@@ -104,7 +107,7 @@ jobs:
         </resources>
         EOF
         
-        # 创建 AndroidManifest.xml（无图标引用）
+        # 创建 AndroidManifest.xml
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -127,7 +130,7 @@ jobs:
         </manifest>
         EOF
         
-        # 创建 MainActivity
+        # 创建干净的 MainActivity
         cat > app/src/main/java/com/ai/invitation/MainActivity.java << 'EOF'
         package com.ai.invitation;
         
@@ -148,38 +151,36 @@ jobs:
         }
         EOF
         
-        # 创建空的图标目录（避免 AAPT 错误）
+        # 创建空的图标目录和有效的最小 PNG
         mkdir -p app/src/main/res/mipmap-hdpi
         mkdir -p app/src/main/res/mipmap-mdpi
         mkdir -p app/src/main/res/mipmap-xhdpi
         mkdir -p app/src/main/res/mipmap-xxhdpi
         mkdir -p app/src/main/res/mipmap-xxxhdpi
         
-        # 创建一个真正的 1x1 透明 PNG（有效文件）
-        echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" | base64 -d > app/src/main/res/mipmap-hdpi/ic_launcher.png
-        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-mdpi/ic_launcher.png
-        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-xhdpi/ic_launcher.png
-        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-        cp app/src/main/res/mipmap-mdpi/ic_launcher.png app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-        cp app/src/main/res/mipmap-xhdpi/ic_launcher.png app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-        cp app/src/main/res/mipmap-xxhdpi/ic_launcher.png app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-        cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+        # 有效的 1x1 透明 PNG
+        ICON_BASE64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        for dir in mipmap-hdpi mipmap-mdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+          echo "$ICON_BASE64" | base64 -d > app/src/main/res/$dir/ic_launcher.png
+          cp app/src/main/res/$dir/ic_launcher.png app/src/main/res/$dir/ic_launcher_round.png
+        done
     
-    # 移除 BOM
-    - name: Remove BOM from all source files
+    # 移除 BOM 并添加配置
+    - name: Remove BOM and configure
       run: |
         find app/src -name "*.java" -exec sed -i '1s/^\xEF\xBB\xBF//' {} \; 2>/dev/null || true
         find app/src -name "*.xml" -exec sed -i '1s/^\xEF\xBB\xBF//' {} \; 2>/dev/null || true
         sed -i '1s/^\xEF\xBB\xBF//' app/build.gradle 2>/dev/null || true
         
-        # 添加 gradle.properties 抑制警告
+        # 添加 gradle.properties
         cat >> gradle.properties << 'EOF'
         android.suppressUnsupportedCompileSdk=34
         EOF
         
-        echo "BOM removal complete"
+        echo "=== Java files ==="
+        find app/src -name "*.java" -type f
+        echo "=== XML files ==="
+        find app/src -name "*.xml" -type f
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace --no-daemon
