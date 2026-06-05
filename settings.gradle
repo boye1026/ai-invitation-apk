@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name = "AI邀请函文案生成器"
