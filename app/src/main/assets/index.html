@@ -1,34 +1,38 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>AI邀请函文案生成器</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
         body{background:#f5f5f5;color:#333;line-height:1.6}
-        .container{max-width:600px;margin:0 auto;padding:20px}
+        .container{max-width:600px;margin:0 auto;padding:20px;position:relative}
         .page{display:none}
         .page.active{display:block}
         .header{text-align:center;margin-bottom:30px}
         .header h1{font-size:24px;margin-bottom:10px}
         .daily-count{background:#e3f2fd;color:#1976d2;padding:8px 16px;border-radius:20px;display:inline-block;font-size:14px;margin-top:10px}
         .scene-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:30px}
-        .scene-card{background:white;border-radius:12px;padding:30px 20px;text-align:center;cursor:pointer;transition:transform 0.2s;color:white}
-        .scene-card:hover{transform:translateY(-5px)}
-        .scene-icon{font-size:48px;margin-bottom:15px}
-        .scene-name{font-size:18px;font-weight:600}
-        .member-btn{width:100%;padding:15px;background:#ff5722;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
+        .scene-card{background:white;border-radius:12px;padding:30px 20px;text-align:center;cursor:pointer;transition:transform 0.2s,opacity 0.2s;color:white}
+        .scene-card:active{transform:scale(0.96);opacity:0.9}
+        .scene-icon{font-size:48px;margin-bottom:15px;pointer-events:none}
+        .scene-name{font-size:18px;font-weight:600;pointer-events:none}
+        .member-btn{width:100%;padding:15px;background:#ff5722;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:opacity 0.2s}
+        .member-btn:active{opacity:0.8}
         .form-container{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
         .form-group{margin-bottom:20px}
         .form-group label{display:block;margin-bottom:8px;font-weight:600}
         .form-group input{width:100%;padding:12px 15px;border:1px solid #ddd;border-radius:8px;font-size:16px}
         .style-options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-        .style-option{display:flex;align-items:center;padding:10px;border:1px solid #ddd;border-radius:8px;cursor:pointer}
-        .style-option input{margin-right:10px}
-        .generate-btn{width:100%;padding:15px;background:#1976d2;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
+        .style-option{display:flex;align-items:center;padding:10px;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:white;transition:background 0.2s}
+        .style-option:active{background:#f0f0f0}
+        .style-option input{margin-right:10px;cursor:pointer}
+        .generate-btn{width:100%;padding:15px;background:#1976d2;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:opacity 0.2s}
+        .generate-btn:active{opacity:0.8}
         .tabs{display:flex;background:white;border-radius:8px;margin-bottom:20px;overflow:hidden}
-        .tab-btn{flex:1;padding:12px;border:none;background:none;font-size:14px;cursor:pointer}
+        .tab-btn{flex:1;padding:12px;border:none;background:none;font-size:14px;cursor:pointer;transition:background 0.2s}
+        .tab-btn:active{background:#e0e0e0}
         .tab-btn.active{background:#1976d2;color:white}
         .tab-content{display:none}
         .tab-content.active{display:block}
@@ -37,28 +41,37 @@
         .result-item:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
         .result-version{font-weight:600;margin-bottom:10px;color:#1976d2}
         .result-content{margin-bottom:15px;line-height:1.8;white-space:pre-wrap}
-        .copy-btn{padding:8px 16px;background:#4caf50;color:white;border:none;border-radius:4px;font-size:14px;cursor:pointer}
+        .copy-btn{padding:8px 16px;background:#4caf50;color:white;border:none;border-radius:4px;font-size:14px;cursor:pointer;transition:opacity 0.2s}
+        .copy-btn:active{opacity:0.8}
         .action-buttons{margin-top:20px;display:flex;flex-direction:column;gap:15px}
-        .regenerate-btn{width:100%;padding:15px;background:#9c27b0;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
-        .member-banner{width:100%;padding:12px;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;border-radius:8px;font-size:14px;cursor:pointer;text-align:center}
+        .regenerate-btn{width:100%;padding:15px;background:#9c27b0;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:opacity 0.2s}
+        .regenerate-btn:active{opacity:0.8}
+        .member-banner{width:100%;padding:12px;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;border-radius:8px;font-size:14px;cursor:pointer;text-align:center;transition:background 0.2s}
+        .member-banner:active{background:#ffe0b2}
         .pricing-container{display:flex;flex-direction:column;gap:20px;margin-bottom:30px}
-        .pricing-card{background:white;border-radius:12px;padding:25px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        .pricing-card{background:white;border-radius:12px;padding:25px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:transform 0.2s}
+        .pricing-card:active{transform:scale(0.98)}
         .pricing-card.popular{border:2px solid #1976d2}
         .pricing-title{font-size:18px;font-weight:600;margin-bottom:10px}
         .pricing-price{font-size:36px;font-weight:700;color:#1976d2;margin-bottom:15px}
         .pricing-desc{color:#666;margin-bottom:20px;line-height:1.8}
-        .buy-btn{width:100%;padding:12px;background:#1976d2;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
+        .buy-btn{width:100%;padding:12px;background:#1976d2;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:opacity 0.2s}
+        .buy-btn:active{opacity:0.8}
         .payment-info{text-align:center;color:#666;line-height:1.8}
         .loading{text-align:center;padding:50px 0;color:#666}
-        .loading::after{content:"正在生成中...";display:block;margin-top:20px}
-        .back-btn{position:absolute;left:20px;top:20px;background:none;border:none;font-size:18px;color:#666;cursor:pointer}
+        .loading::after{content:"✨ 正在生成文案...";display:block;margin-top:20px}
+        .back-btn{position:absolute;left:20px;top:20px;background:none;border:none;font-size:18px;color:#666;cursor:pointer;padding:8px 12px;border-radius:20px;transition:background 0.2s}
+        .back-btn:active{background:#e0e0e0}
+        .toast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:30px;font-size:14px;z-index:1000;animation:fadeOut 2s ease forwards}
+        @keyframes fadeOut{0%{opacity:1}70%{opacity:1}100%{opacity:0;visibility:hidden}}
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- 首页 -->
         <div id="home-page" class="page active">
             <div class="header">
-                <h1>AI邀请函文案生成器</h1>
+                <h1>✨ AI邀请函文案生成器</h1>
                 <p>一键生成婚礼、生日、乔迁等各类场景文案</p>
                 <div class="daily-count">今日剩余生成次数：<span id="remaining-count">3</span></div>
             </div>
@@ -90,30 +103,32 @@
                 </div>
             </div>
 
-            <button class="member-btn" onclick="showPage('member-page')">开通会员 无限生成</button>
+            <button class="member-btn" onclick="showPage('member-page')">⭐ 开通会员 无限生成</button>
         </div>
 
+        <!-- 信息填写页 -->
         <div id="info-page" class="page">
             <button class="back-btn" onclick="goBack()">← 返回</button>
             <div class="header">
                 <h2 id="scene-title">婚礼邀请函</h2>
+                <p>填写以下信息，AI将为您生成精美文案</p>
             </div>
 
             <div class="form-container">
                 <div class="form-group">
-                    <label>姓名/主题</label>
+                    <label>📝 姓名/主题</label>
                     <input type="text" id="name" placeholder="例如：张三和李四的婚礼">
                 </div>
                 <div class="form-group">
-                    <label>时间</label>
+                    <label>📅 时间</label>
                     <input type="datetime-local" id="time">
                 </div>
                 <div class="form-group">
-                    <label>地点</label>
+                    <label>📍 地点</label>
                     <input type="text" id="location" placeholder="例如：XX酒店XX厅">
                 </div>
                 <div class="form-group">
-                    <label>风格偏好</label>
+                    <label>🎨 风格偏好</label>
                     <div class="style-options">
                         <label class="style-option">
                             <input type="radio" name="style" value="文艺" checked>
@@ -134,20 +149,22 @@
                     </div>
                 </div>
 
-                <button class="generate-btn" onclick="generateCopywriting()">一键生成文案</button>
+                <button class="generate-btn" onclick="generateCopywriting()">✨ 一键生成文案</button>
             </div>
         </div>
 
+        <!-- 结果页 -->
         <div id="result-page" class="page">
             <button class="back-btn" onclick="goBack()">← 返回</button>
             <div class="header">
-                <h2>生成结果</h2>
+                <h2>🎉 生成结果</h2>
+                <p>点击下方按钮可复制文案</p>
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('invitation')">邀请函正文</button>
-                <button class="tab-btn" onclick="switchTab('moment')">朋友圈配文</button>
-                <button class="tab-btn" onclick="switchTab('sms')">短信祝福语</button>
+                <button class="tab-btn active" onclick="switchTab('invitation')">📄 邀请函正文</button>
+                <button class="tab-btn" onclick="switchTab('moment')">📱 朋友圈配文</button>
+                <button class="tab-btn" onclick="switchTab('sms')">💬 短信祝福语</button>
             </div>
 
             <div id="invitation-tab" class="tab-content active">
@@ -163,55 +180,66 @@
             </div>
 
             <div class="action-buttons">
-                <button class="regenerate-btn" onclick="generateCopywriting()">换一批</button>
-                <button class="member-banner" onclick="showPage('member-page')">开通会员解锁更多模板</button>
+                <button class="regenerate-btn" onclick="generateCopywriting()">🔄 换一批</button>
+                <button class="member-banner" onclick="showPage('member-page')">💎 开通会员解锁更多模板</button>
             </div>
         </div>
 
+        <!-- 会员页 -->
         <div id="member-page" class="page">
             <button class="back-btn" onclick="goBack()">← 返回</button>
             <div class="header">
-                <h2>开通会员</h2>
+                <h2>💎 开通会员</h2>
+                <p>无限生成，解锁全部模板</p>
             </div>
 
             <div class="pricing-container">
-                <div class="pricing-card">
+                <div class="pricing-card" onclick="buyMembership('单次解锁', 9.9)">
                     <div class="pricing-title">单次解锁</div>
                     <div class="pricing-price">¥9.9</div>
                     <div class="pricing-desc">24小时内无限生成<br>解锁全部模板</div>
-                    <button class="buy-btn" onclick="alert('请微信支付9.9元，联系客服开通')">立即购买</button>
+                    <button class="buy-btn">立即购买</button>
                 </div>
 
-                <div class="pricing-card popular">
-                    <div class="pricing-title">月度会员</div>
+                <div class="pricing-card popular" onclick="buyMembership('月度会员', 12)">
+                    <div class="pricing-title">🔥 月度会员</div>
                     <div class="pricing-price">¥12</div>
                     <div class="pricing-desc">30天内无限生成<br>解锁全部模板</div>
-                    <button class="buy-btn" onclick="alert('请微信支付12元，联系客服开通')">立即购买</button>
+                    <button class="buy-btn">立即购买</button>
                 </div>
 
-                <div class="pricing-card">
-                    <div class="pricing-title">终身会员</div>
+                <div class="pricing-card" onclick="buyMembership('终身会员', 29)">
+                    <div class="pricing-title">🏆 终身会员</div>
                     <div class="pricing-price">¥29</div>
                     <div class="pricing-desc">永久无限生成<br>解锁全部模板<br>优先体验新功能</div>
-                    <button class="buy-btn" onclick="alert('请微信支付29元，联系客服开通')">立即购买</button>
+                    <button class="buy-btn">立即购买</button>
                 </div>
             </div>
 
             <div class="payment-info">
-                <p>支付后请截图保存，联系客服开通会员</p>
-                <p>客服微信：your_wechat_id</p>
+                <p>💰 支付后请截图保存，联系客服开通会员</p>
+                <p>📧 客服微信：ai_helper_01</p>
             </div>
         </div>
     </div>
 
     <script>
         let currentScene = '';
-        let apiKey = 'YOUR_DOUBAO_API_KEY'; // 替换为你的豆包API密钥
+        
+        // 显示提示消息
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
 
         // 页面初始化
         document.addEventListener('DOMContentLoaded', function() {
             updateDailyCount();
             bindSceneEvents();
+            showToast('✨ 欢迎使用AI邀请函生成器');
         });
 
         // 绑定场景选择事件
@@ -245,7 +273,7 @@
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            event.target.classList.add('active');
             document.getElementById(tab + '-tab').classList.add('active');
         }
 
@@ -261,7 +289,8 @@
                 localStorage.setItem('dailyCount', '0');
             }
 
-            document.getElementById('remaining-count').textContent = Math.max(0, 3 - count);
+            const remaining = Math.max(0, 3 - count);
+            document.getElementById('remaining-count').textContent = remaining;
         }
 
         // 检查是否可以生成
@@ -284,11 +313,16 @@
             updateDailyCount();
         }
 
-        // 生成文案
+        // 购买会员
+        function buyMembership(plan, price) {
+            showToast(`请微信支付 ¥${price}，联系客服开通${plan}`);
+        }
+
+        // 生成文案（使用模拟数据）
         async function generateCopywriting() {
             if (!canGenerate()) {
-                alert('今日免费生成次数已用完，请开通会员继续使用');
-                showPage('member-page');
+                showToast('今日免费次数已用完，请开通会员');
+                setTimeout(() => showPage('member-page'), 1000);
                 return;
             }
 
@@ -298,9 +332,14 @@
             const style = document.querySelector('input[name="style"]:checked').value;
 
             if (!name || !time || !location) {
-                alert('请填写完整信息');
+                showToast('请填写完整信息（姓名、时间、地点）');
                 return;
             }
+
+            // 格式化时间
+            const date = new Date(time);
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const formattedTime = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日 ${weekdays[date.getDay()]} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
 
             // 显示加载状态
             document.getElementById('invitation-results').innerHTML = '<div class="loading"></div>';
@@ -308,87 +347,82 @@
             document.getElementById('sms-results').innerHTML = '<div class="loading"></div>';
             showPage('result-page');
 
-            try {
-                // 格式化时间
-                const date = new Date(time);
-                const formattedTime = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日 ${['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][date.getDay()]} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
+            // 模拟API延迟
+            setTimeout(() => {
+                // 根据场景和风格生成不同的文案
+                const mockResult = generateMockResult(name, currentScene, formattedTime, location, style);
+                parseAndDisplayResult(mockResult);
+                incrementCount();
+                showToast('✅ 文案生成成功！');
+            }, 800);
+        }
 
-                // 构建提示词
-                const prompt = `
-你是专业的邀请函和祝福文案生成大师。
-场景：${currentScene}
-姓名/主题：${name}
-时间：${formattedTime}
-地点：${location}
-风格：${style}
-
-请生成3个不同版本的邀请函正文、朋友圈配文和短信祝福语。
-输出格式如下：
-
+        // 生成模拟文案
+        function generateMockResult(name, scene, time, location, style) {
+            const styleMap = {
+                '文艺': ['诗意', '浪漫', '温情'],
+                '简约': ['简洁', '大方', '直接'],
+                '喜庆': ['热闹', '欢乐', '红火'],
+                '正式': ['庄重', '典雅', '礼貌']
+            };
+            const styleDesc = styleMap[style] || styleMap['文艺'];
+            
+            return `
 【邀请函正文】
-版本1：
-[内容]
+版本1（${styleDesc[0]}版）：
+${styleDesc[0]}的邀请函
 
-版本2：
-[内容]
+亲爱的朋友：
 
-版本3：
-[内容]
+我们诚挚地邀请您参加${name}的${scene}。
+时间：${time}
+地点：${location}
+
+期待与您共度这美好的时刻！
+
+版本2（${styleDesc[1]}版）：
+✨ ${name} ✨
+📅 ${time}
+📍 ${location}
+🎉 诚邀您莅临！
+
+版本3（${styleDesc[2]}版）：
+${time}，${location}
+${name}，不见不散！
+让我们一同见证这难忘的时刻。
 
 【朋友圈配文】
 版本1：
-[内容]
+今天要和大家分享一个好消息！🎊
+${name}
+时间：${time}
+地点：${location}
+期待和你相遇~ ❤️
 
 版本2：
-[内容]
+重要的事情说三遍！！！✨
+${name} | ${time} | ${location}
+${name} | ${time} | ${location}
+${name} | ${time} | ${location}
+等你来！
 
 版本3：
-[内容]
+📢 邀请函
+${name}
+${time}
+${location}
+欢迎各位亲朋好友前来参加！
 
 【短信祝福语】
 版本1：
-[内容]
+【${name}邀请】诚邀您参加${name}，时间${time}，地点${location}。期待您的光临！
 
 版本2：
-[内容]
+${name}即将开始！时间：${time}，地点：${location}。请您准时参加，感谢！
 
 版本3：
-[内容]
-
-要求：纯文本输出，不要使用任何格式
-                `;
-
-                // 调用豆包API
-                const response = await fetch('https://api.volcengine.com/api/v3/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + apiKey
-                    },
-                    body: JSON.stringify({
-                        model: 'doubao-4-0',
-                        messages: [{ role: 'user', content: prompt }],
-                        temperature: 0.7,
-                        max_tokens: 2000
-                    })
-                });
-
-                if (!response.ok) throw new Error('API请求失败');
-
-                const data = await response.json();
-                const result = data.choices[0].message.content;
-
-                // 解析并显示结果
-                parseAndDisplayResult(result);
-
-                // 增加生成次数
-                incrementCount();
-
-            } catch (error) {
-                console.error(error);
-                alert('生成失败，请检查网络和API密钥');
-                goBack();
-            }
+恭喜${name}！${time}在${location}举行。衷心期待您的到来，一起分享喜悦！
+            `;
         }
 
         // 解析结果
@@ -409,14 +443,29 @@
         // 解析版本
         function parseVersions(text) {
             const versions = [];
-            const regex = /版本(\d+)：([\s\S]*?)(?=版本\d+：|$)/g;
+            const regex = /版本(\d+)（[^）]*）?：([\s\S]*?)(?=版本\d+（|$)/g;
             let match;
 
             while ((match = regex.exec(text)) !== null) {
                 versions.push(match[2].trim());
             }
-
-            return versions;
+            
+            // 如果正则没匹配到，尝试简单分割
+            if (versions.length === 0) {
+                const lines = text.split('\n');
+                let currentVersion = '';
+                for (let line of lines) {
+                    if (line.includes('版本')) {
+                        if (currentVersion) versions.push(currentVersion);
+                        currentVersion = '';
+                    } else if (line.trim()) {
+                        currentVersion += line + '\n';
+                    }
+                }
+                if (currentVersion) versions.push(currentVersion);
+            }
+            
+            return versions.length ? versions : ['暂无内容'];
         }
 
         // 显示结果
@@ -425,12 +474,13 @@
             container.innerHTML = '';
 
             versions.forEach((version, index) => {
+                const escapedVersion = version.replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/"/g, '&quot;');
                 const item = document.createElement('div');
                 item.className = 'result-item';
                 item.innerHTML = `
-                    <div class="result-version">版本${index + 1}</div>
-                    <div class="result-content">${version}</div>
-                    <button class="copy-btn" onclick="copyText('${version.replace(/'/g, "\\'").replace(/\n/g, '\\n')}')">复制</button>
+                    <div class="result-version">📌 版本${index + 1}</div>
+                    <div class="result-content">${version.replace(/\n/g, '<br>')}</div>
+                    <button class="copy-btn" onclick="copyText(\`${escapedVersion}\`)">📋 复制</button>
                 `;
                 container.appendChild(item);
             });
@@ -438,13 +488,15 @@
 
         // 复制文本
         function copyText(text) {
-            if (window.Android) {
-                Android.copyToClipboard(text);
-            } else {
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('已复制到剪贴板');
-                });
-            }
+            // 使用原生方法复制
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            showToast('✅ 已复制到剪贴板');
         }
     </script>
 </body>
