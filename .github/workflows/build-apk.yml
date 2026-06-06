@@ -137,11 +137,11 @@ jobs:
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/ai/invitation
         
-        # 创建 strings.xml
+        # 创建 strings.xml (App名称已修改为"AI邀请函")
         cat > app/src/main/res/values/strings.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <resources>
-            <string name="app_name">AI邀请函文案生成器</string>
+            <string name="app_name">AI邀请函</string>
         </resources>
         EOF
         
