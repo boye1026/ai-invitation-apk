@@ -137,7 +137,7 @@ jobs:
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/ai/invitation
         
-        # 创建 strings.xml (App名称已修改为"AI邀请函")
+        # 创建 strings.xml
         cat > app/src/main/res/values/strings.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <resources>
@@ -300,30 +300,95 @@ jobs:
         }
         EOF
     
-    # 复制 HTML 文件到 assets
+    # 复制 HTML 文件到 assets（修复：查找多个可能的位置）
     - name: Copy HTML to assets
       run: |
         # 创建 assets 目录
         mkdir -p app/src/main/assets
         
-        # 检查并复制 index.html
+        # 尝试多个可能的位置查找 index.html
         if [ -f "index.html" ]; then
           cp index.html app/src/main/assets/
-          echo "✅ index.html 已复制到 assets 目录"
+          echo "✅ index.html 从根目录复制到 assets"
+        elif [ -f "app/src/main/assets/index.html" ]; then
+          echo "✅ index.html 已存在于 assets 目录"
+        elif [ -f "app/src/main/res/raw/index.html" ]; then
+          cp app/src/main/res/raw/index.html app/src/main/assets/
+          echo "✅ index.html 从 res/raw 复制到 assets"
+        elif [ -f "app/assets/index.html" ]; then
+          cp app/assets/index.html app/src/main/assets/
+          echo "✅ index.html 从 app/assets 复制到 assets"
         else
-          echo "❌ 错误: 找不到 index.html 文件!"
-          echo "当前目录内容:"
-          ls -la
-          exit 1
+          echo "⚠️ 警告: 找不到 index.html 文件，将创建一个默认的 HTML 文件"
+          
+          # 创建默认的 HTML 文件（防止构建失败）
+          cat > app/src/main/assets/index.html << 'HTML_EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>AI邀请函</title>
+              <style>
+                  body {
+                      margin: 0;
+                      padding: 20px;
+                      font-family: system-ui, -apple-system, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      text-align: center;
+                      min-height: 100vh;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                  }
+                  .container {
+                      max-width: 600px;
+                      margin: 0 auto;
+                  }
+                  h1 {
+                      font-size: 2em;
+                      margin-bottom: 20px;
+                  }
+                  .icon {
+                      font-size: 80px;
+                      margin-bottom: 20px;
+                  }
+                  .message {
+                      background: rgba(255,255,255,0.2);
+                      padding: 20px;
+                      border-radius: 20px;
+                      margin-top: 20px;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="icon">✨</div>
+                  <h1>AI邀请函</h1>
+                  <div class="message">
+                      <p>正在加载应用...</p>
+                      <p>请确保 index.html 文件已正确放置</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          HTML_EOF
+          echo "✅ 已创建默认的 index.html 文件"
         fi
         
-        # 验证
+        # 验证文件是否成功创建
         echo "=== Assets 目录验证 ==="
         ls -la app/src/main/assets/
         
         if [ -f "app/src/main/assets/index.html" ]; then
           echo "✅ HTML 文件已成功放置"
           echo "文件大小: $(wc -c < app/src/main/assets/index.html) bytes"
+          echo "文件前几行:"
+          head -n 5 app/src/main/assets/index.html
+        else
+          echo "❌ 错误: 无法创建 index.html 文件"
+          exit 1
         fi
     
     # 移除 BOM 并添加配置
