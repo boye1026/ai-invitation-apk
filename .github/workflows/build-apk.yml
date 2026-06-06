@@ -130,25 +130,100 @@ jobs:
         </manifest>
         EOF
         
-        # 创建干净的 MainActivity
+        # 创建干净的 MainActivity (WebView版本)
         cat > app/src/main/java/com/ai/invitation/MainActivity.java << 'EOF'
         package com.ai.invitation;
         
         import android.os.Bundle;
-        import android.widget.TextView;
+        import android.webkit.WebSettings;
+        import android.webkit.WebView;
+        import android.webkit.WebViewClient;
         import androidx.appcompat.app.AppCompatActivity;
         
         public class MainActivity extends AppCompatActivity {
+            private WebView webView;
+        
             @Override
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
-                TextView textView = new TextView(this);
-                textView.setText("AI Invitation App");
-                textView.setTextSize(24);
-                textView.setGravity(android.view.Gravity.CENTER);
-                setContentView(textView);
+                setContentView(R.layout.activity_main);
+        
+                webView = findViewById(R.id.webview);
+                WebSettings webSettings = webView.getSettings();
+                webSettings.setJavaScriptEnabled(true);
+                webSettings.setDomStorageEnabled(true);
+                webSettings.setAllowFileAccess(true);
+                webSettings.setAllowContentAccess(true);
+                webSettings.setAllowFileAccessFromFileURLs(true);
+        
+                webView.addJavascriptInterface(new WebAppInterface(this), "Android");
+                webView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                    }
+                    
+                    @Override
+                    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                        android.util.Log.e("WebView", "Error: " + description);
+                    }
+                });
+                
+                // 从assets加载HTML文件
+                webView.loadUrl("file:///android_asset/index.html");
+            }
+        
+            @Override
+            public void onBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    super.onBackPressed();
+                }
             }
         }
+        EOF
+        
+        # 创建 WebAppInterface.java
+        cat > app/src/main/java/com/ai/invitation/WebAppInterface.java << 'EOF'
+        package com.ai.invitation;
+        
+        import android.content.Context;
+        import android.content.ClipData;
+        import android.content.ClipboardManager;
+        import android.widget.Toast;
+        import androidx.webkit.JavaScriptInterface;
+        
+        public class WebAppInterface {
+            Context mContext;
+        
+            WebAppInterface(Context c) {
+                mContext = c;
+            }
+        
+            @JavaScriptInterface
+            public void copyToClipboard(String text) {
+                ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("文案", text);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(mContext, "已复制到剪贴板", Toast.LENGTH_SHORT).show();
+            }
+        }
+        EOF
+        
+        # 创建 activity_main.xml
+        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        
+            <WebView
+                android:id="@+id/webview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        
+        </LinearLayout>
         EOF
         
         # 创建空的图标目录和有效的最小 PNG
@@ -164,6 +239,35 @@ jobs:
           echo "$ICON_BASE64" | base64 -d > app/src/main/res/$dir/ic_launcher.png
           cp app/src/main/res/$dir/ic_launcher.png app/src/main/res/$dir/ic_launcher_round.png
         done
+    
+    # 复制 assets 文件（关键修复步骤）
+    - name: Copy assets files
+      run: |
+        # 创建 assets 目录
+        mkdir -p app/src/main/assets
+        
+        # 检查并复制 index.html
+        if [ -f "index.html" ]; then
+          cp index.html app/src/main/assets/
+          echo "✅ index.html 已复制到 assets 目录"
+        elif [ -f "app/src/main/assets/index.html" ]; then
+          echo "✅ index.html 已存在于 assets 目录"
+        else
+          echo "❌ 错误: 找不到 index.html 文件!"
+          echo "当前目录内容:"
+          ls -la
+          exit 1
+        fi
+        
+        # 验证文件是否成功复制
+        echo "=== Assets 目录验证 ==="
+        ls -la app/src/main/assets/
+        
+        # 显示 HTML 文件的前几行（调试用）
+        if [ -f "app/src/main/assets/index.html" ]; then
+          echo "=== index.html 内容预览 ==="
+          head -n 10 app/src/main/assets/index.html
+        fi
     
     # 移除 BOM 并添加配置
     - name: Remove BOM and configure
@@ -181,6 +285,8 @@ jobs:
         find app/src -name "*.java" -type f
         echo "=== XML files ==="
         find app/src -name "*.xml" -type f
+        echo "=== Assets files ==="
+        find app/src -name "*.html" -type f
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace --no-daemon
