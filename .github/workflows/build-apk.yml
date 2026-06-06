@@ -97,13 +97,14 @@ jobs:
         
         # 创建目录
         mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/ai/invitation
         
         # 创建 strings.xml
         cat > app/src/main/res/values/strings.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <resources>
-            <string name="app_name">AI Invitation</string>
+            <string name="app_name">AI邀请函文案生成器</string>
         </resources>
         EOF
         
@@ -130,7 +131,22 @@ jobs:
         </manifest>
         EOF
         
-        # 创建干净的 MainActivity (WebView版本)
+        # 创建 activity_main.xml
+        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        
+            <WebView
+                android:id="@+id/webview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        
+        </LinearLayout>
+        EOF
+        
+        # 创建 MainActivity.java (修正版本)
         cat > app/src/main/java/com/ai/invitation/MainActivity.java << 'EOF'
         package com.ai.invitation;
         
@@ -138,6 +154,7 @@ jobs:
         import android.webkit.WebSettings;
         import android.webkit.WebView;
         import android.webkit.WebViewClient;
+        import android.webkit.WebChromeClient;
         import androidx.appcompat.app.AppCompatActivity;
         
         public class MainActivity extends AppCompatActivity {
@@ -154,7 +171,14 @@ jobs:
                 webSettings.setDomStorageEnabled(true);
                 webSettings.setAllowFileAccess(true);
                 webSettings.setAllowContentAccess(true);
-                webSettings.setAllowFileAccessFromFileURLs(true);
+                webSettings.setLoadWithOverviewMode(true);
+                webSettings.setUseWideViewPort(true);
+                
+                // Android 4.4+ 可以使用
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                    webSettings.setAllowFileAccessFromFileURLs(true);
+                    webSettings.setAllowUniversalAccessFromFileURLs(true);
+                }
         
                 webView.addJavascriptInterface(new WebAppInterface(this), "Android");
                 webView.setWebViewClient(new WebViewClient() {
@@ -168,6 +192,7 @@ jobs:
                         android.util.Log.e("WebView", "Error: " + description);
                     }
                 });
+                webView.setWebChromeClient(new WebChromeClient());
                 
                 // 从assets加载HTML文件
                 webView.loadUrl("file:///android_asset/index.html");
@@ -184,7 +209,7 @@ jobs:
         }
         EOF
         
-        # 创建 WebAppInterface.java
+        # 创建 WebAppInterface.java (修正版本 - 使用正确的导入)
         cat > app/src/main/java/com/ai/invitation/WebAppInterface.java << 'EOF'
         package com.ai.invitation;
         
@@ -192,7 +217,7 @@ jobs:
         import android.content.ClipData;
         import android.content.ClipboardManager;
         import android.widget.Toast;
-        import androidx.webkit.JavaScriptInterface;
+        import android.webkit.JavascriptInterface;
         
         public class WebAppInterface {
             Context mContext;
@@ -201,7 +226,7 @@ jobs:
                 mContext = c;
             }
         
-            @JavaScriptInterface
+            @JavascriptInterface
             public void copyToClipboard(String text) {
                 ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("文案", text);
@@ -209,21 +234,6 @@ jobs:
                 Toast.makeText(mContext, "已复制到剪贴板", Toast.LENGTH_SHORT).show();
             }
         }
-        EOF
-        
-        # 创建 activity_main.xml
-        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-        
-            <WebView
-                android:id="@+id/webview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        
-        </LinearLayout>
         EOF
         
         # 创建空的图标目录和有效的最小 PNG
