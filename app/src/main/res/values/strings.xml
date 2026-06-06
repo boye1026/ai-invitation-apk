@@ -1,3 +1,4 @@
-﻿<resources>
-    <string name="app_name">AI邀请函文案生成器</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI邀请函</string>
 </resources>
