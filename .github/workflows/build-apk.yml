@@ -89,13 +89,50 @@ jobs:
           chmod +x gradlew
         fi
     
-    # 删除有问题的 Java 文件并创建干净的代码
-    - name: Clean and create source files
+    # 生成漂亮的渐变图标
+    - name: Generate beautiful app icons
       run: |
-        # 删除所有现有的 Java 文件
-        rm -rf app/src/main/java/com/ai/invitation/*.java 2>/dev/null || true
+        sudo apt-get update
+        sudo apt-get install -y imagemagick librsvg2-bin
         
-        # 创建目录
+        cat > icon.svg << 'EOF'
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#667eea"/>
+              <stop offset="100%" style="stop-color:#764ba2"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="96" fill="url(#grad)"/>
+          <circle cx="256" cy="256" r="160" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="20"/>
+          <text x="256" y="340" font-size="200" text-anchor="middle" fill="white" font-family="sans-serif">✉</text>
+          <text x="256" y="180" font-size="60" text-anchor="middle" fill="#FFD700" font-family="sans-serif" font-weight="bold">AI</text>
+          <circle cx="128" cy="128" r="8" fill="white" opacity="0.3"/>
+          <circle cx="384" cy="384" r="12" fill="white" opacity="0.3"/>
+          <circle cx="400" cy="120" r="6" fill="white" opacity="0.2"/>
+        </svg>
+        EOF
+        
+        for size in 48 72 96 144 192; do
+          case $size in
+            48) dir="mipmap-mdpi" ;;
+            72) dir="mipmap-hdpi" ;;
+            96) dir="mipmap-xhdpi" ;;
+            144) dir="mipmap-xxhdpi" ;;
+            192) dir="mipmap-xxxhdpi" ;;
+          esac
+          mkdir -p app/src/main/res/$dir
+          rsvg-convert -w $size -h $size icon.svg > app/src/main/res/$dir/ic_launcher.png
+          cp app/src/main/res/$dir/ic_launcher.png app/src/main/res/$dir/ic_launcher_round.png
+        done
+        
+        rm icon.svg
+        echo "✅ 漂亮图标生成完成"
+    
+    # 创建所有必要的Android文件
+    - name: Create Android source files
+      run: |
+        # 创建目录结构
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/ai/invitation
@@ -108,6 +145,29 @@ jobs:
         </resources>
         EOF
         
+        # 创建 themes.xml
+        cat > app/src/main/res/values/themes.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <resources>
+            <style name="Theme.AIInvitationGenerator" parent="Theme.AppCompat.Light.NoActionBar">
+                <item name="colorPrimary">#667eea</item>
+                <item name="colorPrimaryDark">#764ba2</item>
+                <item name="colorAccent">#FF9800</item>
+                <item name="android:windowBackground">@color/white</item>
+            </style>
+        </resources>
+        EOF
+        
+        # 创建 colors.xml
+        cat > app/src/main/res/values/colors.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <resources>
+            <color name="purple_500">#667eea</color>
+            <color name="purple_700">#764ba2</color>
+            <color name="white">#FFFFFF</color>
+        </resources>
+        EOF
+        
         # 创建 AndroidManifest.xml
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
@@ -115,12 +175,16 @@ jobs:
         
             <application
                 android:allowBackup="true"
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
                 android:label="@string/app_name"
                 android:supportsRtl="true"
-                android:theme="@style/Theme.AppCompat.Light">
+                android:theme="@style/Theme.AIInvitationGenerator"
+                android:usesCleartextTraffic="true">
                 <activity
                     android:name=".MainActivity"
-                    android:exported="true">
+                    android:exported="true"
+                    android:configChanges="orientation|screenSize">
                     <intent-filter>
                         <action android:name="android.intent.action.MAIN" />
                         <category android:name="android.intent.category.LAUNCHER" />
@@ -146,7 +210,7 @@ jobs:
         </LinearLayout>
         EOF
         
-        # 创建 MainActivity.java (修正版本)
+        # 创建 MainActivity.java
         cat > app/src/main/java/com/ai/invitation/MainActivity.java << 'EOF'
         package com.ai.invitation;
         
@@ -173,8 +237,9 @@ jobs:
                 webSettings.setAllowContentAccess(true);
                 webSettings.setLoadWithOverviewMode(true);
                 webSettings.setUseWideViewPort(true);
+                webSettings.setBuiltInZoomControls(true);
+                webSettings.setDisplayZoomControls(false);
                 
-                // Android 4.4+ 可以使用
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
                     webSettings.setAllowFileAccessFromFileURLs(true);
                     webSettings.setAllowUniversalAccessFromFileURLs(true);
@@ -194,7 +259,6 @@ jobs:
                 });
                 webView.setWebChromeClient(new WebChromeClient());
                 
-                // 从assets加载HTML文件
                 webView.loadUrl("file:///android_asset/index.html");
             }
         
@@ -209,7 +273,7 @@ jobs:
         }
         EOF
         
-        # 创建 WebAppInterface.java (修正版本 - 使用正确的导入)
+        # 创建 WebAppInterface.java
         cat > app/src/main/java/com/ai/invitation/WebAppInterface.java << 'EOF'
         package com.ai.invitation;
         
@@ -235,23 +299,9 @@ jobs:
             }
         }
         EOF
-        
-        # 创建空的图标目录和有效的最小 PNG
-        mkdir -p app/src/main/res/mipmap-hdpi
-        mkdir -p app/src/main/res/mipmap-mdpi
-        mkdir -p app/src/main/res/mipmap-xhdpi
-        mkdir -p app/src/main/res/mipmap-xxhdpi
-        mkdir -p app/src/main/res/mipmap-xxxhdpi
-        
-        # 有效的 1x1 透明 PNG
-        ICON_BASE64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-        for dir in mipmap-hdpi mipmap-mdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
-          echo "$ICON_BASE64" | base64 -d > app/src/main/res/$dir/ic_launcher.png
-          cp app/src/main/res/$dir/ic_launcher.png app/src/main/res/$dir/ic_launcher_round.png
-        done
     
-    # 复制 assets 文件（关键修复步骤）
-    - name: Copy assets files
+    # 复制 HTML 文件到 assets
+    - name: Copy HTML to assets
       run: |
         # 创建 assets 目录
         mkdir -p app/src/main/assets
@@ -260,8 +310,6 @@ jobs:
         if [ -f "index.html" ]; then
           cp index.html app/src/main/assets/
           echo "✅ index.html 已复制到 assets 目录"
-        elif [ -f "app/src/main/assets/index.html" ]; then
-          echo "✅ index.html 已存在于 assets 目录"
         else
           echo "❌ 错误: 找不到 index.html 文件!"
           echo "当前目录内容:"
@@ -269,33 +317,33 @@ jobs:
           exit 1
         fi
         
-        # 验证文件是否成功复制
+        # 验证
         echo "=== Assets 目录验证 ==="
         ls -la app/src/main/assets/
         
-        # 显示 HTML 文件的前几行（调试用）
         if [ -f "app/src/main/assets/index.html" ]; then
-          echo "=== index.html 内容预览 ==="
-          head -n 10 app/src/main/assets/index.html
+          echo "✅ HTML 文件已成功放置"
+          echo "文件大小: $(wc -c < app/src/main/assets/index.html) bytes"
         fi
     
     # 移除 BOM 并添加配置
-    - name: Remove BOM and configure
+    - name: Final configuration
       run: |
         find app/src -name "*.java" -exec sed -i '1s/^\xEF\xBB\xBF//' {} \; 2>/dev/null || true
         find app/src -name "*.xml" -exec sed -i '1s/^\xEF\xBB\xBF//' {} \; 2>/dev/null || true
-        sed -i '1s/^\xEF\xBB\xBF//' app/build.gradle 2>/dev/null || true
         
-        # 添加 gradle.properties
         cat >> gradle.properties << 'EOF'
         android.suppressUnsupportedCompileSdk=34
+        android.useAndroidX=true
+        android.enableJetifier=true
         EOF
         
-        echo "=== Java files ==="
+        echo "=== 项目文件验证 ==="
+        echo "Java files:"
         find app/src -name "*.java" -type f
-        echo "=== XML files ==="
+        echo "XML files:"
         find app/src -name "*.xml" -type f
-        echo "=== Assets files ==="
+        echo "Assets files:"
         find app/src -name "*.html" -type f
     
     - name: Build Debug APK
@@ -304,6 +352,6 @@ jobs:
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
+        name: AI-Invitation-App
         path: app/build/outputs/apk/debug/*.apk
         retention-days: 30
