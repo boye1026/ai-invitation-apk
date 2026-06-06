@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>AI邀请函文案生成器</title>
+    <title>AI邀请函</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
         body{background:#f5f5f5;color:#333;line-height:1.6}
@@ -90,7 +90,7 @@
         <!-- 首页 -->
         <div id="home-page" class="page active">
             <div class="header">
-                <h1>✨ AI邀请函文案生成器</h1>
+                <h1>✨ AI邀请函</h1>
                 <p>一键生成婚礼、生日、乔迁等各类场景文案</p>
                 <div class="daily-count">今日剩余生成次数：<span id="remaining-count">3</span></div>
             </div>
@@ -267,7 +267,7 @@
             updateDailyCount();
             bindSceneEvents();
             checkMemberStatus();
-            showToast('✨ 欢迎使用AI邀请函生成器');
+            showToast('✨ 欢迎使用AI邀请函');
         });
         
         // 检查会员状态
@@ -324,7 +324,6 @@
 
         // 更新每日生成次数
         function updateDailyCount() {
-            // 如果是会员，显示无限
             const memberInfo = localStorage.getItem('memberInfo');
             if (memberInfo) {
                 const info = JSON.parse(memberInfo);
@@ -350,7 +349,6 @@
 
         // 检查是否可以生成
         function canGenerate() {
-            // 检查是否为会员
             const memberInfo = localStorage.getItem('memberInfo');
             if (memberInfo) {
                 const info = JSON.parse(memberInfo);
@@ -369,7 +367,6 @@
 
         // 增加生成次数
         function incrementCount() {
-            // 会员不增加次数计数
             const memberInfo = localStorage.getItem('memberInfo');
             if (memberInfo) {
                 const info = JSON.parse(memberInfo);
@@ -388,7 +385,6 @@
 
         // 试用功能
         function startTrial() {
-            // 检查是否已经试用过
             const hasTrial = localStorage.getItem('hasTrial');
             const memberInfo = localStorage.getItem('memberInfo');
             
@@ -405,7 +401,6 @@
                 return;
             }
             
-            // 设置试用状态
             localStorage.setItem('hasTrial', 'true');
             const memberData = {
                 type: 'trial',
@@ -414,7 +409,6 @@
             };
             localStorage.setItem('memberInfo', JSON.stringify(memberData));
             
-            // 重置今日次数限制
             localStorage.setItem('lastDate', new Date().toDateString());
             localStorage.setItem('dailyCount', '0');
             
@@ -424,9 +418,8 @@
             showPage('home-page');
         }
 
-        // 购买会员（完整支付功能）
+        // 购买会员
         function buyMembership(plan, price) {
-            // 显示支付确认弹窗
             showPaymentModal(plan, price);
         }
         
@@ -467,11 +460,9 @@
         
         // 处理支付
         function processPayment(plan, price) {
-            // 模拟支付验证
             const confirmed = confirm(`请确认已完成支付 ¥${price}\n\n支付完成后点击确定，将自动为您开通会员。`);
             
             if (confirmed) {
-                // 计算会员到期时间
                 let expiryDate = new Date();
                 if (plan === '单次解锁') {
                     expiryDate.setDate(expiryDate.getDate() + 1);
@@ -481,7 +472,6 @@
                     expiryDate.setFullYear(expiryDate.getFullYear() + 10);
                 }
                 
-                // 保存会员信息
                 const memberData = {
                     type: plan,
                     price: price,
@@ -491,22 +481,15 @@
                 };
                 localStorage.setItem('memberInfo', JSON.stringify(memberData));
                 
-                // 保存购买记录
                 let purchases = JSON.parse(localStorage.getItem('purchases') || '[]');
                 purchases.push(memberData);
                 localStorage.setItem('purchases', JSON.stringify(purchases));
                 
-                // 更新UI
                 document.getElementById('vipBadge').style.display = 'block';
                 updateDailyCount();
-                
-                // 关闭模态框
                 closePaymentModal();
-                
-                // 显示成功消息
                 showToast(`🎉 恭喜您成为${plan}！现在可以无限生成文案了`);
                 
-                // 跳转到首页
                 setTimeout(() => {
                     showPage('home-page');
                 }, 1500);
